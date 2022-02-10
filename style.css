@@ -113,3 +113,26 @@ table, th, td {
     90% { transform: translate(1px, 2px) rotate(0deg); }
     100% { transform: translate(1px, -2px) rotate(-1deg); }
   }
+  /* .city-el {
+    position: relative;
+    padding: 25px;
+}
+.city-el:hover .city-close {
+    opacity: 1;
+}
+.city-close {
+    position: absolute;
+    color: red;
+    top: 10px;
+    right: 10px;
+    opacity: 0;
+    cursor: pointer;
+}
+
+.city-temp {
+    font-size: 32px;
+}
+
+.city-name {
+    font-size: 18px;
+} */

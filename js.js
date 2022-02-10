@@ -1,49 +1,102 @@
-function myFunction() {
-            var txt;
-            var person = prompt("Please enter your name:", "Harry Potter");
-            if (person == null || person == "") {
-                txt = "User cancelled the prompt.";
-            } else {
-                txt = "Hello " + person + "! How are you today?";
-            }
-            document.getElementById("demo").innerHTML = txt;
-        }
-    //Get the button:
-mybutton = document.getElementById("myBtn");
+const API_KEY = `69c705dcb2f4447eb72181420213101`;
+const API_URL = `http://api.weatherapi.com/v1/current.json?key=${'132366152a7046c180014853222701'}`
 
-// When the user scrolls down 20px from the top of the document, show the button
-window.onscroll = function() {scrollFunction()};
+class App {
+    constructor(el) {
+        this.el = el;
+        const citiesJson = localStorage.getItem('cities');
+        let cities = [];
+        if (citiesJson) {
+            cities = JSON.parse(citiesJson);
+        } 
+        this.cities =  cities.map(c => new City(c.name, this));
+        this.render();
+    }
+    
+    addCity(c) {
+        this.cities.push(c);
+        this.render();
+        this.saveIntoStorage();
+    }
 
-function scrollFunction() {
-  if (document.body.scrollTop > 20 || document.documentElement.scrollTop > 20) {
-    mybutton.style.display = "block";
-  } else {
-    mybutton.style.display = "none";
-  }
+    removeCity(c) {
+        // Way 1
+        // const index = this.cities.findIndex(city => city.name === c.name);
+        // this.cities.splice(index, 1);
+
+        // Way 2
+        this.cities = this.cities.filter(city => city.name !== c.name);
+
+        this.render();
+        this.saveIntoStorage();
+    }
+
+    render() {
+        this.el.innerHTML = '';
+        this.cities.forEach(city => city.render(this.el))
+    }
+
+    saveIntoStorage() {
+        localStorage.setItem('cities', JSON.stringify(this.cities))
+    }
+
 }
 
-// When the user clicks on the button, scroll to the top of the document
-function topFunction() {
-  document.body.scrollTop = 0; // For Safari
-  document.documentElement.scrollTop = 0; // For Chrome, Firefox, IE and Opera
-}
-// When the user scrolls the page, execute myFunction
-window.onscroll = function() {myFunction()};
+class City {
+    constructor(name, app) {
+        this.name = name;
+        this.app = app;
+    }
 
-function myFunction() {
-  var winScroll = document.body.scrollTop || document.documentElement.scrollTop;
-  var height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
-  var scrolled = (winScroll / height) * 100;
-  document.getElementById("myBar").style.width = scrolled + "%";
-}
-var i = 0;
-var txt = 'Lorem ipsum typing effect!'; /* The text */
-var speed = 50; /* The speed/duration of the effect in milliseconds */
+    async getWeather() {
+        const res = await fetch(`${API_URL}&q=${this.name}`)
+            .then(response => response.json())
 
-function typeWriter() {
-  if (i < txt.length) {
-    document.getElementById("demo").innerHTML += txt.charAt(i);
-    i++;
-    setTimeout(typeWriter, speed);
-  }
+        return res.current.temp_c ;
+    }
+
+    async render(ctr) {
+        const temp = await this.getWeather();
+        const cityEl = document.createElement('div');
+        cityEl.className = 'city-el d-flex flex-column align-items-center'
+        cityEl.innerHTML = `
+            <span class="city-temp">${temp}℃</span>    
+            <span class="city-name">${this.name}</span>
+            <span class="city-close"><i class="fas fa-times"></i></span>        
+        `
+        ctr.appendChild(cityEl);
+        const close = cityEl.querySelector('.city-close');
+        close.addEventListener('click', () => this.app.removeCity(this))
+    }
+
+    toJSON() {
+        return {name: this.name};
+    }
+}
+
+const app = new App(document.querySelector('.weather-locations'));
+
+const modal = document.querySelector('#addCityModal');
+const bootstrapModal = new bootstrap.Modal(modal, {
+    keyboard: false
+})
+const input = document.querySelector('#cityName')
+const saveBtn = document.querySelector('#saveCity');
+saveBtn.addEventListener('click', () => {
+    addCity();
+})
+input.addEventListener('keypress', (ev) => {
+    if (ev.key === 'Enter') {
+        addCity();
+    }
+})
+modal.addEventListener('shown.bs.modal', () => {
+    input.focus();
+})
+
+function addCity() {
+    const city = new City(input.value, app);
+    app.addCity(city);
+    bootstrapModal.hide();
+    input.value = '';
 }
